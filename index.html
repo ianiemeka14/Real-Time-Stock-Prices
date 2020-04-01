@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Real-Time Stock Price Quote</title>
+         <link rel="stylesheet" type="text/css" href="stock_style.css"/>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script type="text/javascript">
+             function search() {
+                $(document).ready(function () {
+                    $.ajax({
+                        url: "stockinfo.csv",
+                        type: "GET",
+                        dataType: "text",
+                        success: function (filedata) {
+                            processfile(filedata);
+                        }
+                    });
+                });
+            }
+
+            function processfile(filecontents) {
+                var filelineArray = filecontents.split("\n");
+
+                var arraySize = filelineArray.length;
+
+                var inputName = document.getElementById("input_symbol").value.trim();
+
+                var foundmatch = false;
+
+                for (var i = 0; i < arraySize; i++) {
+                    var lineArray = filelineArray[i].split(",");
+                    var symbolInLine = lineArray[1];
+                    var nameInLine = lineArray[2];
+                    var summaryinLine = lineArray[9];
+
+                    if (inputName == symbolInLine) {
+                        $("#showname").html(nameInLine);
+                        document.getElementById("showsummary").innerHTML = "<a href='" + summaryinLine + "' target='blank_'>View Summary</a>";
+
+                        foundmatch = true;
+
+                    } 
+
+
+                }
+
+                if (inputName != "") {
+
+                    if (foundmatch == true) {
+                        var url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + inputName + "&apikey=BHKFP4EKFIVM3XC4";
+                        jQuery.ajax({
+                            url: url,
+                            dataType: "json",
+                            contentType: "application/json",
+                            success: function (serverdata) {
+                                var symbol = serverdata['Meta Data']['2. Symbol']
+                                var lastRefreshed = serverdata['Meta Data']['3. Last Refreshed']
+                                var close_price = serverdata['Time Series (Daily)'][lastRefreshed]['4. close']
+
+                                $("#showstock").html(close_price);
+                                $("#showsymbol").html(symbol);
+
+
+                            }
+
+                        });
+
+                    } else
+                        alert("Company symbol " + inputName + " does not exist. Please input a valid company symbol.");
+
+
+                } else
+                    alert("Please type in searchbox.");
+
+
+            }
+
+
+
+
+        </script>
+    </head>
+    <body>
+       <h2>Real-Time Stock Price Quote</h2>
+        Search:&nbsp;<input id="input_symbol" type="text" 
+                            style="width: 230px;" placeholder="search company's symbol (all CAPS)" autofocus onchange="search()"/>
+        <br><br>
+        <div id="symbol">Symbol</div>
+        <strong class="stock_strong"><span id="showsymbol"></span></strong> <br>
+        <p></p>
+        <div id="price">Close Price</div>
+        <strong class="stock_strong">$<span id="showstock"></span></strong>
+        <p></p>
+        <div id="name">Name</div>
+        <strong class="stock_strong"><span id="showname"></span></strong>
+        <p></p>
+        <div id="link">Summary</div>
+        <span id="showsummary"></span>
+
+    </body>
+</html>
